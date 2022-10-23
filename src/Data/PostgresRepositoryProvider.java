@@ -6,6 +6,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.Vector;
 
 import org.postgresql.ds.PGSimpleDataSource;
@@ -32,7 +33,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 		source.setUser(userid);
 		source.setPassword(passwd);
 		Connection conn = source.getConnection();
-	    
+
 	    return conn;
 	}
 
@@ -80,7 +81,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 					"\tJOIN etf ON investinstruction.code = etf.code\n" +
 					"\tJOIN expirystatus ON investinstruction.instructionid = expirystatus.instructionid\n" +
 					"\tWHERE investinstruction.administrator = ?\n" +
-					"\tORDER BY expirystatus.expirycode DESC, expirydate ASC, username DESC;";
+					"\tORDER BY expirystatus.expirycode DESC, expirydate ASC, username DESC;						";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, userName);
 			ResultSet res = ps.executeQuery();
@@ -137,24 +138,37 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 	public Vector<Instruction> findInstructionsByCriteria(String searchString) {
 		try {
 			Connection conn = openConnection();
-			String sql = "SELECT instructionid, amount, frequency, expirydate, username, adminname, \"name\", notes\n" +
-					"FROM adminfullname\n" +
-					"JOIN investinstruction ON adminfullname.\"login\" = investinstruction.administrator \n" +
-					"JOIN customerfullname ON customerfullname.\"login\" = investinstruction.customer \n" +
-					"JOIN etf ON investinstruction.code = etf.code\n" +
-					"WHERE username LIKE ?\n" +
-					"OR \"name\" LIKE ?\n" +
-					"OR notes LIKE ?\n" +
-					"AND expirydate >= '2022-10-21'::date\n" +
-					"ORDER BY adminname, expirydate ASC;";
+			String sql = "SELECT\n" +
+					"\tinvestinstruction.instructionid,\n" +
+					"\tamount,\n" +
+					"\tfrequency,\n" +
+					"\texpirydate,\n" +
+					"\tusername,\n" +
+					"\tadminname,\n" +
+					"\t\"name\",\n" +
+					"\tnotes \n" +
+					"FROM\n" +
+					"\tinvestinstruction\n" +
+					"\tJOIN customerfullname ON customerfullname.\"login\" = investinstruction.customer\n" +
+					"\tLEFT JOIN adminfullname ON adminfullname.\"login\" = investinstruction.administrator\n" +
+					"\tJOIN etf ON investinstruction.code = etf.code\n" +
+					"\tJOIN expirystatus ON investinstruction.instructionid = expirystatus.instructionid \n" +
+					"WHERE\n" +
+					"\texpirycode = 1 \n" +
+					"\tAND username ILIKE ? \n" +
+					"\tOR \"name\" ILIKE ? \n" +
+					"\tOR notes ILIKE ? \n" +
+					"ORDER BY\n" +
+					"\tadminname DESC,\n" +
+					"\texpirydate ASC;";
 			PreparedStatement ps = conn.prepareStatement(sql);
-			ps.setString(1, "%"+searchString+"%");
-			ps.setString(2, "%"+searchString+"%");
-			ps.setString(3, "%"+searchString+"%");
+			ps.setString(1, "%" + searchString + "%");
+			ps.setString(2, "%" + searchString + "%");
+			ps.setString(3, "%" + searchString + "%");
 			ResultSet res = ps.executeQuery();
 			Vector<Instruction> ins = new Vector<Instruction>();
 			conn.close();
-			while(res.next()){
+			while (res.next()) {
 				Instruction instruction = new Instruction();
 				instruction.setInstructionId(res.getInt("instructionid"));
 				instruction.setAmount(res.getString("amount"));
@@ -165,13 +179,12 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 				instruction.setEtf(res.getString("name"));
 				instruction.setNotes(res.getString("notes"));
 				ins.add(instruction);
-				return ins;
 			}
+			return ins;
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		return null;
 	}
 
 	/**

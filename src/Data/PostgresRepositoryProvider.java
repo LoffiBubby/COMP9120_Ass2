@@ -1,5 +1,6 @@
 package Data;
 
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
@@ -193,7 +194,34 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 	 */
 	@Override
 	public void addInstruction(Instruction instruction) {
-
+		try {
+			Connection conn = openConnection();
+			String sql = "INSERT INTO investinstruction ( amount, frequency, customer, code, notes, expirydate )\n" +
+					"VALUES\n" +
+					"\t( ? , ? , ? , ? , ?, CURRENT_DATE+\"interval\"('1 Y')) ;";
+			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setBigDecimal(1, BigDecimal.valueOf(Double.parseDouble(instruction.getAmount())));
+			String sql2 = "SELECT frequencycode FROM frequency WHERE frequencydesc = ?;";
+			PreparedStatement ps2 = conn.prepareStatement(sql2);
+			ps2.setString(1,instruction.getFrequency());
+			ResultSet rst1 = ps2.executeQuery();
+			if(rst1.next())
+				ps.setString(2, rst1.getString("frequencycode"));
+//			if(rst.next())
+//				return rst.getString("frequencycode");
+//			if(instruction.getFrequency().equals("Monthly"))
+//				ps.setString(2,"MTH");
+//			if(instruction.getFrequency().equals("Fortnightly"))
+//				ps.setString(2, "FTH");
+			ps.setString(3, instruction.getCustomer());
+			ps.setString(4, instruction.getEtf());
+			ps.setString(5, instruction.getNotes());
+			ps.executeQuery();
+			conn.close();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**

@@ -7,6 +7,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Objects;
 import java.util.Vector;
 
@@ -23,7 +24,7 @@ import Presentation.IRepositoryProvider;
 public class PostgresRepositoryProvider implements IRepositoryProvider {
 	//DB connection parameters - ENTER YOUR LOGIN AND PASSWORD HERE
     private final String userid = "y22s2c9120_weli4073";
-    private final String passwd = "Pyxcq6Ft";
+    private final String passwd = "Ljwwn001101";
     private final String myHost = "soit-db-pro-2.ucc.usyd.edu.au";
 
 	private Connection openConnection() throws SQLException
@@ -82,7 +83,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 					"\tJOIN etf ON investinstruction.code = etf.code\n" +
 					"\tJOIN expirystatus ON investinstruction.instructionid = expirystatus.instructionid\n" +
 					"\tWHERE investinstruction.administrator = ?\n" +
-					"\tORDER BY expirystatus.expirycode DESC, expirydate ASC, username DESC;						";
+					"\tORDER BY expirystatus.expirycode DESC, expirydate ASC, username DESC;";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, userName);
 			ResultSet res = ps.executeQuery();
@@ -102,7 +103,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 				instruction.setInstructionId(res.getInt("instructionid"));
 				instruction.setAmount(res.getString("amount"));
 				instruction.setFrequency(res.getString("frequency"));
-				instruction.setExpiryDate(res.getString("expirydate"));
+				instruction.setExpiryDate(new SimpleDateFormat("dd-MM-yyyy").format(res.getDate("expirydate")));
 				instruction.setCustomer(res.getString("username"));
 				instruction.setAdministrator(res.getString("adminname"));
 				instruction.setEtf(res.getString("name"));
@@ -174,7 +175,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 				instruction.setInstructionId(res.getInt("instructionid"));
 				instruction.setAmount(res.getString("amount"));
 				instruction.setFrequency(res.getString("frequency"));
-				instruction.setExpiryDate(res.getString("expirydate"));
+				instruction.setExpiryDate(new SimpleDateFormat("dd-MM-yyyy").format(res.getDate("expirydate"))); //??????
 				instruction.setCustomer(res.getString("username"));
 				instruction.setAdministrator(res.getString("adminname"));
 				instruction.setEtf(res.getString("name"));
@@ -194,25 +195,42 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 	 */
 	@Override
 	public void addInstruction(Instruction instruction) {
-		try {
+//		try {
+//			Connection conn = openConnection();
+//			String sql = "INSERT INTO investinstruction ( amount, frequency, customer, code, notes, expirydate )\n" +
+//					"VALUES\n" +
+//					"\t( ? , ? , ? , ? , ?, CURRENT_DATE+\"interval\"('1 Y')) ;";
+//			PreparedStatement ps = conn.prepareStatement(sql);
+//			ps.setBigDecimal(1, BigDecimal.valueOf(Double.parseDouble(instruction.getAmount())));
+//			String sql2 = "SELECT frequencycode FROM frequency WHERE frequencydesc = ?;";
+//			PreparedStatement ps2 = conn.prepareStatement(sql2);
+//			ps2.setString(1,instruction.getFrequency());
+//			ResultSet rst1 = ps2.executeQuery();
+//			if(rst1.next())
+//				ps.setString(2, rst1.getString("frequencycode"));
+//			ps.setString(3, instruction.getCustomer());
+//			ps.setString(4, instruction.getEtf());
+//			ps.setString(5, instruction.getNotes());
+//			ps.executeQuery();
+//			conn.close();
+//		}
+//		catch (Exception e) {
+//			throw new RuntimeException(e);
+//		}
+		try{
 			Connection conn = openConnection();
-			String sql = "INSERT INTO investinstruction ( amount, frequency, customer, code, notes, expirydate )\n" +
-					"VALUES\n" +
-					"\t( ? , ? , ? , ? , ?, CURRENT_DATE+\"interval\"('1 Y')) ;";
+			String sql = "SELECT\n" +
+					"\t* \n" +
+					"FROM\n" +
+					"\tinsert_into_investins ( ?, ?, ?, ?, ?);";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setBigDecimal(1, BigDecimal.valueOf(Double.parseDouble(instruction.getAmount())));
-			String sql2 = "SELECT frequencycode FROM frequency WHERE frequencydesc = ?;";
+			String sql2 = "SELECT frequencycode FROM frequency WHERE frequencydesc = ?;"; // Use the Monthly or Fortnightly are acceptable
 			PreparedStatement ps2 = conn.prepareStatement(sql2);
 			ps2.setString(1,instruction.getFrequency());
 			ResultSet rst1 = ps2.executeQuery();
 			if(rst1.next())
 				ps.setString(2, rst1.getString("frequencycode"));
-//			if(rst.next())
-//				return rst.getString("frequencycode");
-//			if(instruction.getFrequency().equals("Monthly"))
-//				ps.setString(2,"MTH");
-//			if(instruction.getFrequency().equals("Fortnightly"))
-//				ps.setString(2, "FTH");
 			ps.setString(3, instruction.getCustomer());
 			ps.setString(4, instruction.getEtf());
 			ps.setString(5, instruction.getNotes());
@@ -230,6 +248,38 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 	 */
 	@Override
 	public void updateInstruction(Instruction instruction) {
+//		try{
+//			Connection conn = openConnection();
+//			String sql = "UPDATE investinstruction \n" +
+//					"SET amount = ?, frequency = ?, customer = ? ,code = ? ,notes = ? ,expirydate= ? \n" +
+//					"WHERE instructionid = ? ;";
+//			PreparedStatement ps = conn.prepareStatement(sql);
+//			ps.setBigDecimal(1, BigDecimal.valueOf(Double.parseDouble(instruction.getAmount())));
+//
+//			String sql2 = "SELECT frequencycode FROM frequency WHERE frequencydesc = ?;";
+//			PreparedStatement ps2 = conn.prepareStatement(sql2);
+//			ps2.setString(1,instruction.getFrequency());
+//			ResultSet rst1 = ps2.executeQuery();
+//			if(rst1.next())
+//				ps.setString(2, rst1.getString("frequencycode"));
+//
+//			String sql3 = "SELECT username FROM customerfullname WHERE login = ?;";
+//			PreparedStatement ps3 = conn.prepareStatement(sql3);
+//			ps3.setString(1, instruction.getCustomer());
+//			ResultSet rst2 = ps3.executeQuery();
+//			if(rst2.next())
+//				ps.setString(3,rst2.getString("username"));
+//
+//			ps.setString(4, instruction.getEtf());
+//			ps.setString(5, instruction.getNotes());
+//			ps.setDate(6, Date.valueOf(new SimpleDateFormat("yyyy-MM-dd").format(new SimpleDateFormat("dd-MM-yyyy").parse(instruction.getExpiryDate()))));
+//			ps.setInt(7, instruction.getInstructionId());
+//			ps.executeQuery();
+//			conn.close();
+//		}
+//		catch (Exception e) {
+//			throw new RuntimeException(e);
+//		}
 
 	}
 }

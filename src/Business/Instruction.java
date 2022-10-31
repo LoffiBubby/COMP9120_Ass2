@@ -1,6 +1,7 @@
 package Business;
 
-public class Instruction {
+public class
+Instruction {
 
 	private int instructionId = 0;
 	private String amount;

@@ -191,6 +191,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 			ps.setString(5, instruction.getNotes());
 			ps.executeQuery();
 			conn.close();
+			System.out.println("OK");
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
@@ -224,6 +225,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 			ps.setString(7, instruction.getNotes());
 			ps.executeQuery();
 			conn.close();
+			System.out.println("OK");
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);

@@ -23,8 +23,8 @@ import Presentation.IRepositoryProvider;
  */
 public class PostgresRepositoryProvider implements IRepositoryProvider {
 	//DB connection parameters - ENTER YOUR LOGIN AND PASSWORD HERE
-    private final String userid = "y22s2c9120_weli4073";
-    private final String passwd = "Ljwwn001101";
+    private final String userid = "";//your unikey
+    private final String passwd = "";//your password
     private final String myHost = "soit-db-pro-2.ucc.usyd.edu.au";
 
 	private Connection openConnection() throws SQLException

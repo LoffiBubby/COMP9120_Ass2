@@ -23,8 +23,8 @@ import Presentation.IRepositoryProvider;
  */
 public class PostgresRepositoryProvider implements IRepositoryProvider {
 	//DB connection parameters - ENTER YOUR LOGIN AND PASSWORD HERE
-    private final String userid = "";//your unikey
-    private final String passwd = "";//your password
+    private final String userid = "y22s2c9120_weli4073";
+    private final String passwd = "Ljwwn001101";
     private final String myHost = "soit-db-pro-2.ucc.usyd.edu.au";
 
 	private Connection openConnection() throws SQLException
@@ -76,14 +76,29 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 	public Vector<Instruction> findInstructionsByAdm(String userName) {
 		try {
 			Connection conn = openConnection();
-			String sql = "\tSELECT investinstruction.instructionid, amount, frequency, expirydate, username, adminname, \"name\", notes, expirycode\n" +
-					"\tFROM adminfullname\n" +
-					"\tJOIN investinstruction ON adminfullname.\"login\" = investinstruction.administrator \n" +
-					"\tJOIN customerfullname ON customerfullname.\"login\" = investinstruction.customer \n" +
+			String sql = "SELECT\n" +
+					"\tinvestinstruction.instructionid,\n" +
+					"\tamount,\n" +
+					"\tfrequencydesc,\n" +
+					"\texpirydate,\n" +
+					"\tusername,\n" +
+					"\tadminname,\n" +
+					"\t\"name\",\n" +
+					"\tnotes,\n" +
+					"\texpirycode \n" +
+					"FROM\n" +
+					"\tadminfullname\n" +
+					"\tJOIN investinstruction ON adminfullname.\"login\" = investinstruction.administrator\n" +
+					"\tJOIN customerfullname ON customerfullname.\"login\" = investinstruction.customer\n" +
 					"\tJOIN etf ON investinstruction.code = etf.code\n" +
 					"\tJOIN expirystatus ON investinstruction.instructionid = expirystatus.instructionid\n" +
-					"\tWHERE investinstruction.administrator = ?\n" +
-					"\tORDER BY expirystatus.expirycode DESC, expirydate ASC, username DESC;";
+					"\tJOIN frequency ON investinstruction.frequency = frequency.frequencycode \n" +
+					"WHERE\n" +
+					"\tinvestinstruction.administrator = ? \n" +
+					"ORDER BY\n" +
+					"\texpirystatus.expirycode DESC,\n" +
+					"\texpirydate ASC,\n" +
+					"\tusername DESC;";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, userName);
 			ResultSet res = ps.executeQuery();
@@ -93,7 +108,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 				Instruction instruction = new Instruction();
 				instruction.setInstructionId(res.getInt("instructionid"));
 				instruction.setAmount(res.getString("amount"));
-				instruction.setFrequency(res.getString("frequency"));
+				instruction.setFrequency(res.getString("frequencydesc"));
 				instruction.setExpiryDate(new SimpleDateFormat("dd-MM-yyyy").format(res.getDate("expirydate")));
 				instruction.setCustomer(res.getString("username"));
 				instruction.setAdministrator(res.getString("adminname"));
@@ -120,25 +135,27 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 			String sql = "SELECT\n" +
 					"\tinvestinstruction.instructionid,\n" +
 					"\tamount,\n" +
-					"\tfrequency,\n" +
+					"\tfrequencydesc,\n" +
 					"\texpirydate,\n" +
 					"\tusername,\n" +
 					"\tadminname,\n" +
 					"\t\"name\",\n" +
-					"\tnotes \n" +
+					"\tnotes,\n" +
+					"\tadminname IS NULL AS is_admin_null\n" +
 					"FROM\n" +
 					"\tinvestinstruction\n" +
 					"\tJOIN customerfullname ON customerfullname.\"login\" = investinstruction.customer\n" +
 					"\tLEFT JOIN adminfullname ON adminfullname.\"login\" = investinstruction.administrator\n" +
 					"\tJOIN etf ON investinstruction.code = etf.code\n" +
-					"\tJOIN expirystatus ON investinstruction.instructionid = expirystatus.instructionid \n" +
+					"\tJOIN expirystatus ON investinstruction.instructionid = expirystatus.instructionid\n" +
+					"\tJOIN frequency ON investinstruction.frequency = frequency.frequencycode \n" +
 					"WHERE\n" +
 					"\texpirycode = 1 \n" +
-					"\tAND username ILIKE ? \n" +
+					"\tAND (username ILIKE ? \n" +
 					"\tOR \"name\" ILIKE ? \n" +
-					"\tOR notes ILIKE ? \n" +
+					"\tOR notes ILIKE ? ) \n" +
 					"ORDER BY\n" +
-					"\tadminname DESC,\n" +
+					"\tis_admin_null DESC,\n" +
 					"\texpirydate ASC;";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, "%" + searchString + "%");
@@ -151,7 +168,7 @@ public class PostgresRepositoryProvider implements IRepositoryProvider {
 				Instruction instruction = new Instruction();
 				instruction.setInstructionId(res.getInt("instructionid"));
 				instruction.setAmount(res.getString("amount"));
-				instruction.setFrequency(res.getString("frequency"));
+				instruction.setFrequency(res.getString("frequencydesc"));
 				instruction.setExpiryDate(new SimpleDateFormat("dd-MM-yyyy").format(res.getDate("expirydate"))); //??????
 				instruction.setCustomer(res.getString("username"));
 				instruction.setAdministrator(res.getString("adminname"));
